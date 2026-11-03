@@ -1,0 +1,15 @@
+**/bin/
+**/obj/
+**/node_modules/
+**/dist/
+**/.angular/
+**/.vs/
+**/.vscode/
+**/*.user
+**/TestResults/
+.git/
+.github/
+tests/
+src/DisputePortal.Api/wwwroot/
+docker-compose*.yml
+*.md

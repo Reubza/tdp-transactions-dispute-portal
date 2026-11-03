@@ -38,7 +38,12 @@ internal static class ServiceCollectionExtensions
             o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
             o.AddPolicy(AuthPolicies.LoginRateLimit, ctx => RateLimitPartition.GetFixedWindowLimiter(
                 ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-                _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(1) }));
+                _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = ctx.RequestServices.GetRequiredService<IConfiguration>()
+                        .GetValue("RateLimiting:LoginAttemptsPerMinute", 10),
+                    Window = TimeSpan.FromMinutes(1),
+                }));
         });
 
         services.Configure<ForwardedHeadersOptions>(o =>

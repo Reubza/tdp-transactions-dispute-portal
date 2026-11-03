@@ -85,6 +85,7 @@ public sealed class DisputePortalApiFactory : WebApplicationFactory<Program>, IA
         builder.UseSetting("Database:MigrateOnStartup", "true");
         builder.UseSetting("Database:Seed:Enabled", "true");
         builder.UseSetting("Database:Seed:DemoPassword", DemoPassword);
+        builder.UseSetting("RateLimiting:LoginAttemptsPerMinute", "1000");
     }
 }
 

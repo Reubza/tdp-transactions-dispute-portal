@@ -1,0 +1,130 @@
+<header class="page-header">
+  @if (isAgent()) {
+    <h1>Dispute queue</h1>
+    <p class="subtitle">Disputes raised by customers. Open a dispute to review and resolve it.</p>
+  } @else {
+    <h1>My disputes</h1>
+    <p class="subtitle">Every dispute you have raised, and where it stands.</p>
+  }
+</header>
+
+<form class="filters" [formGroup]="filters" aria-label="Filter disputes">
+  <mat-button-toggle-group
+    formControlName="open"
+    aria-label="Open or closed disputes"
+    hideSingleSelectionIndicator
+  >
+    <mat-button-toggle value="all">All</mat-button-toggle>
+    <mat-button-toggle value="open">Open</mat-button-toggle>
+    <mat-button-toggle value="closed">Closed</mat-button-toggle>
+  </mat-button-toggle-group>
+
+  <mat-form-field>
+    <mat-label>Status</mat-label>
+    <mat-select formControlName="status">
+      <mat-option value="">Any status</mat-option>
+      @for (status of statuses; track status) {
+        <mat-option [value]="status">{{ statusLabel(status) }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  <mat-form-field class="search">
+    <mat-label>Search</mat-label>
+    <mat-icon matPrefix>search</mat-icon>
+    <input
+      matInput
+      formControlName="search"
+      maxlength="100"
+      [placeholder]="isAgent() ? 'Merchant, reference or customer' : 'Merchant or reference'"
+    />
+  </mat-form-field>
+</form>
+
+<section class="table-card" aria-live="polite">
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Loading disputes" />
+  }
+
+  @if (error(); as message) {
+    <div class="state error" role="alert">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ message }}</p>
+      <button mat-stroked-button (click)="load()">Try again</button>
+    </div>
+  } @else if (result(); as page) {
+    @if (page.items.length === 0) {
+      <div class="state">
+        <mat-icon>inbox</mat-icon>
+        @if (isAgent()) {
+          <p>No disputes match your filters.</p>
+        } @else {
+          <p>You haven't raised any disputes that match these filters.</p>
+          <a mat-stroked-button routerLink="/transactions">Go to transactions</a>
+        }
+      </div>
+    } @else {
+      <div class="table-scroll">
+        <table mat-table [dataSource]="page.items" aria-label="Disputes">
+          <ng-container matColumnDef="createdAt">
+            <th mat-header-cell *matHeaderCellDef>Raised</th>
+            <td mat-cell *matCellDef="let d">{{ d.createdAt | date: 'd MMM y' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="customer">
+            <th mat-header-cell *matHeaderCellDef>Customer</th>
+            <td mat-cell *matCellDef="let d">{{ d.customerName }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="merchant">
+            <th mat-header-cell *matHeaderCellDef>Transaction</th>
+            <td mat-cell *matCellDef="let d">
+              <a class="row-link" [routerLink]="detailLink(d)">{{ d.merchant }}</a>
+              <div class="muted">
+                {{ d.transactionPostedAt | date: 'd MMM y' }} · {{ d.transactionReference }}
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="amount">
+            <th mat-header-cell *matHeaderCellDef class="num">Amount</th>
+            <td mat-cell *matCellDef="let d" class="num">
+              {{ d.amount | currency: d.currency : 'symbol-narrow' }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="reason">
+            <th mat-header-cell *matHeaderCellDef>Reason</th>
+            <td mat-cell *matCellDef="let d">{{ reasonLabel(d.reason) }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let d"><app-status-chip [status]="d.status" /></td>
+          </ng-container>
+
+          <ng-container matColumnDef="updatedAt">
+            <th mat-header-cell *matHeaderCellDef>Last update</th>
+            <td mat-cell *matCellDef="let d">{{ d.updatedAt | date: 'd MMM y, HH:mm' }}</td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="columns(); sticky: true"></tr>
+          <tr
+            mat-row
+            *matRowDef="let row; columns: columns()"
+            class="clickable"
+            (click)="open(row)"
+          ></tr>
+        </table>
+      </div>
+      <mat-paginator
+        [length]="page.totalCount"
+        [pageIndex]="page.page - 1"
+        [pageSize]="page.pageSize"
+        [pageSizeOptions]="[10, 20, 50, 100]"
+        (page)="onPage($event)"
+        aria-label="Select page of disputes"
+      />
+    }
+  }
+</section>

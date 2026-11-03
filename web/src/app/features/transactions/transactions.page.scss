@@ -1,0 +1,25 @@
+.merchant {
+  font-weight: 500;
+}
+
+.pending {
+  color: var(--mat-sys-tertiary);
+}
+
+.num {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.credit {
+  color: #1b7a3d;
+}
+
+.chip-link {
+  text-decoration: none;
+}
+
+.actions {
+  text-align: right;
+}

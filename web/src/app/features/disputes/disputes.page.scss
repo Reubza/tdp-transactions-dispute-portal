@@ -1,0 +1,20 @@
+.num {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.row-link {
+  color: inherit;
+  font-weight: 500;
+  text-decoration: none;
+
+  &:hover,
+  &:focus-visible {
+    text-decoration: underline;
+  }
+}
+
+mat-button-toggle-group {
+  flex: 0 0 auto;
+}

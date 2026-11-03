@@ -1,0 +1,40 @@
+# Local/demo stack: PostgreSQL + the portal (API and SPA in one container).
+#   docker compose up --build     ->  http://localhost:8080
+# Secrets below are development defaults; override them via environment variables or a .env file.
+name: dispute-portal
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: dispute_portal
+      POSTGRES_USER: dispute_portal
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dispute_portal}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dispute_portal -d dispute_portal"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  app:
+    build: .
+    image: dispute-portal:local
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    environment:
+      ConnectionStrings__DisputePortal: "Host=db;Port=5432;Database=dispute_portal;Username=dispute_portal;Password=${POSTGRES_PASSWORD:-dispute_portal}"
+      Jwt__SigningKey: ${JWT_SIGNING_KEY:-local-demo-signing-key-change-me-0123456789abcdef}
+      Database__MigrateOnStartup: "true"
+      Database__Seed__Enabled: "true"
+      Database__Seed__DemoPassword: ${DEMO_PASSWORD:-Demo@1234}
+      Api__EnableDocs: "true"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  db-data:

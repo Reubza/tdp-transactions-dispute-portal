@@ -1,0 +1,90 @@
+// Shared layout for list pages (page header, filter bar, table card, empty/error states).
+
+.page-header {
+  margin-bottom: 16px;
+
+  h1 {
+    font: var(--mat-sys-headline-small);
+    margin: 0;
+  }
+}
+
+.subtitle {
+  margin: 4px 0 0;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+
+  mat-form-field {
+    flex: 1 1 180px;
+  }
+
+  .search {
+    flex: 2 1 260px;
+  }
+}
+
+.table-card {
+  position: relative;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--mat-sys-surface);
+
+  mat-progress-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 2;
+  }
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+}
+
+tr.clickable {
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    background: var(--mat-sys-surface-container);
+    outline: none;
+  }
+}
+
+.muted {
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-small);
+}
+
+.state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 48px 16px;
+  color: var(--mat-sys-on-surface-variant);
+  text-align: center;
+
+  mat-icon {
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+  }
+
+  &.error {
+    color: var(--mat-sys-error);
+  }
+}
