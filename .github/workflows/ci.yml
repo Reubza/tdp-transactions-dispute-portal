@@ -24,9 +24,9 @@ jobs:
       - run: dotnet restore
       - run: dotnet build --no-restore --configuration Release
       - name: Unit tests
-        run: dotnet test tests/DisputePortal.UnitTests --no-build --configuration Release --logger trx --collect:"XPlat Code Coverage"
+        run: dotnet test tests/UnitTests --no-build --configuration Release --logger trx --collect:"XPlat Code Coverage"
       - name: Integration tests (Testcontainers PostgreSQL)
-        run: dotnet test tests/DisputePortal.IntegrationTests --no-build --configuration Release --logger trx
+        run: dotnet test tests/IntegrationTests --no-build --configuration Release --logger trx
       - uses: actions/upload-artifact@v4
         if: always()
         with:

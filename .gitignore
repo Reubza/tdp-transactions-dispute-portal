@@ -485,4 +485,4 @@ $RECYCLE.BIN/
 web/node_modules/
 web/dist/
 web/.angular/
-src/DisputePortal.Api/wwwroot/
+src/Api/wwwroot/

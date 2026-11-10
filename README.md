@@ -90,15 +90,15 @@ docker run --rm -p 8080:8080 \
 │  Angular SPA (static files in wwwroot)                                              │
 │        │  HTTPS/JSON, Bearer JWT                                                    │
 │        ▼                                                                            │
-│  DisputePortal.Api            Controllers, auth policies, ProblemDetails,           │
-│                               rate limiting, health checks, OpenAPI, security hdrs  │
+│  Api              Controllers, auth policies, ProblemDetails,                       │
+│                   rate limiting, health checks, OpenAPI, security headers           │
 │        ▼                                                                            │
-│  DisputePortal.Application    Use-case services, DTOs, FluentValidation             │
+│  Application      Use-case services, DTOs, FluentValidation                         │
 │        ▼                                                                            │
-│  DisputePortal.Domain         Entities + rules (Dispute state machine, window)      │
+│  Domain           Entities + rules (Dispute state machine, window)                  │
 │        ▲                                                                            │
-│  DisputePortal.Infrastructure EF Core/Npgsql, migrations, JWT issuing,              │
-│                               PBKDF2 password hashing, demo seeding                 │
+│  Infrastructure   EF Core/Npgsql, migrations, JWT issuing,                          │
+│                   PBKDF2 password hashing, demo seeding                             │
 └────────────────────────────────────────┬────────────────────────────────────────────┘
                                          ▼
                                    PostgreSQL 17
@@ -110,14 +110,14 @@ aggregate) and on `ICurrentUser`, `ITokenIssuer` and `IPasswordHasher`.
 
 ```
 src/
-  DisputePortal.Domain/          Users, Accounts, Transactions, Disputes (+ status history)
-  DisputePortal.Application/     Auth, Transactions, Disputes (customer + agent) services
-  DisputePortal.Infrastructure/  Persistence (DbContext, configurations, migrations, seeder), Auth (JWT, hashing)
-  DisputePortal.Api/             Program.cs, controllers, middleware
-web/                             Angular app (core/, features/, layout/, shared/)
+  Domain/            Users, Accounts, Transactions, Disputes (+ status history)
+  Application/       Auth, Transactions, Disputes (customer + agent) services
+  Infrastructure/    Persistence (DbContext, configurations, migrations, seeder), Auth (JWT, hashing)
+  Api/               Program.cs, Controllers/, Common/ (middleware, auth policies, error handling)
+web/src/app/         Angular app: components/, services/, guards/, interceptors/, models/
 tests/
-  DisputePortal.UnitTests/        Domain rules + application services (EF in-memory)
-  DisputePortal.IntegrationTests/ Real HTTP against the real app + real PostgreSQL (Testcontainers)
+  UnitTests/         Domain rules + application services (EF in-memory)
+  IntegrationTests/  Real HTTP against the real app + real PostgreSQL (Testcontainers)
 ```
 
 ### API
@@ -146,16 +146,16 @@ errors (with a stable `code` for business-rule failures, e.g. `dispute.already_o
 
 Prerequisites: .NET SDK 10, Node.js 22.12+ or 24+, and a PostgreSQL 15+ server.
 
-1. Create a database and user matching `src/DisputePortal.Api/appsettings.Development.json`
+1. Create a database and user matching `src/Api/appsettings.Development.json`
    (`dispute_portal` / `dispute_portal` on `localhost:5432`), or override the connection string:
    ```bash
-   dotnet user-secrets --project src/DisputePortal.Api set "ConnectionStrings:DisputePortal" "Host=localhost;Database=dispute_portal;Username=...;Password=..."
+   dotnet user-secrets --project src/Api set "ConnectionStrings:DisputePortal" "Host=localhost;Database=dispute_portal;Username=...;Password=..."
    ```
    Alternatively run one in Docker:
    `docker run -d -p 5432:5432 -e POSTGRES_USER=dispute_portal -e POSTGRES_PASSWORD=dispute_portal -e POSTGRES_DB=dispute_portal postgres:17-alpine`
 2. Start the API (applies migrations and seeds demo data in Development):
    ```bash
-   dotnet run --project src/DisputePortal.Api
+   dotnet run --project src/Api
    ```
    API on http://localhost:5080, docs at http://localhost:5080/scalar.
 3. Start the Angular dev server (proxies `/api` to the API):
@@ -170,13 +170,13 @@ Prerequisites: .NET SDK 10, Node.js 22.12+ or 24+, and a PostgreSQL 15+ server.
 
 ```bash
 # Backend unit tests (domain rules, application services)
-dotnet test tests/DisputePortal.UnitTests
+dotnet test tests/UnitTests
 
 # Backend integration tests: the real API over HTTP against a real PostgreSQL.
 # Needs Docker (Testcontainers starts postgres:17-alpine) ...
-dotnet test tests/DisputePortal.IntegrationTests
+dotnet test tests/IntegrationTests
 # ... or point them at an existing server; a uniquely named database is created and dropped:
-DISPUTEPORTAL_TEST_POSTGRES="Host=localhost;Username=postgres;Password=..." dotnet test tests/DisputePortal.IntegrationTests
+DISPUTEPORTAL_TEST_POSTGRES="Host=localhost;Username=postgres;Password=..." dotnet test tests/IntegrationTests
 
 # Frontend unit tests (Vitest), formatting check and production build
 cd web

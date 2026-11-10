@@ -12,14 +12,14 @@ RUN npm run build -- --configuration production
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 COPY global.json Directory.Build.props .editorconfig ./
-COPY src/DisputePortal.Domain/DisputePortal.Domain.csproj src/DisputePortal.Domain/
-COPY src/DisputePortal.Application/DisputePortal.Application.csproj src/DisputePortal.Application/
-COPY src/DisputePortal.Infrastructure/DisputePortal.Infrastructure.csproj src/DisputePortal.Infrastructure/
-COPY src/DisputePortal.Api/DisputePortal.Api.csproj src/DisputePortal.Api/
-RUN dotnet restore src/DisputePortal.Api/DisputePortal.Api.csproj
+COPY src/Domain/Domain.csproj src/Domain/
+COPY src/Application/Application.csproj src/Application/
+COPY src/Infrastructure/Infrastructure.csproj src/Infrastructure/
+COPY src/Api/Api.csproj src/Api/
+RUN dotnet restore src/Api/Api.csproj
 COPY src/ src/
-COPY --from=web /web/dist/web/browser/ src/DisputePortal.Api/wwwroot/
-RUN dotnet publish src/DisputePortal.Api/DisputePortal.Api.csproj \
+COPY --from=web /web/dist/web/browser/ src/Api/wwwroot/
+RUN dotnet publish src/Api/Api.csproj \
       --configuration Release --no-restore --output /app /p:UseAppHost=false
 
 # ---- 3. Runtime image ----------------------------------------------------------
@@ -34,4 +34,4 @@ USER $APP_UID
 EXPOSE 8080
 HEALTHCHECK --interval=15s --timeout=3s --start-period=20s --retries=5 \
   CMD wget -q --spider http://localhost:8080/health/live || exit 1
-ENTRYPOINT ["dotnet", "DisputePortal.Api.dll"]
+ENTRYPOINT ["dotnet", "Api.dll"]

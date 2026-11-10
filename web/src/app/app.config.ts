@@ -4,7 +4,8 @@ import { provideNativeDateAdapter } from '@angular/material/core';
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { routes } from './app.routes';
-import { authInterceptor, serverErrorInterceptor } from './core/auth.interceptor';
+import { authInterceptor } from './interceptors/auth.interceptor';
+import { serverErrorInterceptor } from './interceptors/server-error.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
