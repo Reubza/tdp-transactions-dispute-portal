@@ -18,3 +18,16 @@
 mat-button-toggle-group {
   flex: 0 0 auto;
 }
+
+.mat-column-createdAt,
+.mat-column-updatedAt {
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .mat-column-reason,
+  .mat-column-updatedAt,
+  .mat-column-customer {
+    display: none;
+  }
+}

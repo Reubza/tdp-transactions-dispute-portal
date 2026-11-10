@@ -1,23 +1,45 @@
 @use '@angular/material' as mat;
 @use 'list-page';
 
+// Resolve brand: deep navy with a warm coral accent used sparingly for emphasis.
+:root {
+  --brand-navy: #0b2a5b;
+  --brand-navy-soft: #1d4e9e;
+  --brand-accent: #f2545b;
+  --brand-success: #1b7a3d;
+  --brand-surface: #f6f8fb;
+  --brand-radius: 14px;
+  --brand-shadow: 0 1px 2px rgb(11 42 91 / 6%), 0 4px 16px rgb(11 42 91 / 6%);
+}
+
 html {
   height: 100%;
   @include mat.theme(
     (
       color: (
-        primary: mat.$azure-palette,
-        tertiary: mat.$orange-palette,
+        primary: mat.$blue-palette,
+        tertiary: mat.$rose-palette,
       ),
       typography: Roboto,
       density: 0,
+    )
+  );
+  @include mat.theme-overrides(
+    (
+      primary: var(--brand-navy),
+      on-primary: #ffffff,
+      surface: #ffffff,
+      surface-container-lowest: var(--brand-surface),
+      surface-container-low: #f3f6fb,
+      secondary-container: #e6edf8,
+      on-secondary-container: #17407f,
     )
   );
 }
 
 body {
   color-scheme: light;
-  background-color: var(--mat-sys-surface-container-lowest);
+  background-color: var(--brand-surface);
   color: var(--mat-sys-on-surface);
   font: var(--mat-sys-body-medium);
   margin: 0;
@@ -27,5 +49,5 @@ body {
 h1,
 h2,
 h3 {
-  color: var(--mat-sys-on-surface);
+  color: var(--brand-navy);
 }

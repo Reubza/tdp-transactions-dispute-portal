@@ -9,7 +9,7 @@
 
 @if (error(); as message) {
   <div class="state error" role="alert">
-    <mat-icon>error_outline</mat-icon>
+    <span class="state-icon"><mat-icon>error_outline</mat-icon></span>
     <p>{{ message }}</p>
     <button mat-stroked-button (click)="load()">Try again</button>
   </div>

@@ -29,6 +29,7 @@ import { problemMessage } from '../shared/problem-message.util';
 import { DISPUTE_STATUSES, reasonLabel, statusLabel } from '../shared/dispute-labels.util';
 import { DisputeQuery, DisputeStatus, DisputeSummary } from '../../models/dispute.model';
 import { PagedResult } from '../../models/common.model';
+import { merchantColour, merchantInitials } from '../shared/merchant-avatar.util';
 import { StatusChipComponent } from '../shared/status-chip/status-chip.component';
 
 type OpenFilter = 'all' | 'open' | 'closed';
@@ -80,6 +81,8 @@ export class DisputesComponent implements OnInit {
       : ['createdAt', 'merchant', 'amount', 'reason', 'status', 'updatedAt'],
   );
   protected readonly statuses = DISPUTE_STATUSES;
+  protected readonly merchantColour = merchantColour;
+  protected readonly merchantInitials = merchantInitials;
   protected readonly statusLabel = statusLabel;
   protected readonly reasonLabel = reasonLabel;
   protected readonly result = signal<PagedResult<DisputeSummary> | null>(null);

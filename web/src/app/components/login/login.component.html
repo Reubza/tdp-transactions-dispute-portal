@@ -1,0 +1,115 @@
+<div class="page">
+  <section class="brand-panel" aria-label="About Resolve">
+    <div class="brand">
+      <img src="logo.svg" alt="" width="48" height="48" />
+      <div>
+        <strong>Resolve</strong>
+        <span>transaction disputes</span>
+      </div>
+    </div>
+
+    <h1>Something on your statement doesn't look right?</h1>
+    <p class="lead">Raise a dispute in under a minute and follow it until it's resolved.</p>
+
+    <ul class="points">
+      <li>
+        <span class="point-icon"><mat-icon>search</mat-icon></span>
+        <div>
+          <strong>Spot it</strong>
+          <span>Search and filter every transaction across your accounts.</span>
+        </div>
+      </li>
+      <li>
+        <span class="point-icon"><mat-icon>flag</mat-icon></span>
+        <div>
+          <strong>Dispute it</strong>
+          <span>Tell us what went wrong, within 120 days of the transaction.</span>
+        </div>
+      </li>
+      <li>
+        <span class="point-icon"><mat-icon>timeline</mat-icon></span>
+        <div>
+          <strong>Track it</strong>
+          <span>See every update from our disputes team in one timeline.</span>
+        </div>
+      </li>
+    </ul>
+  </section>
+
+  <section class="form-panel">
+    <div class="form-card">
+      @if (submitting()) {
+        <mat-progress-bar mode="indeterminate" />
+      }
+      <h2>Sign in</h2>
+      <p class="hint">Use your e-mail address and password.</p>
+
+      @if (expired()) {
+        <p class="notice" role="status">
+          <mat-icon>schedule</mat-icon> Your session has ended. Please sign in again.
+        </p>
+      }
+      @if (error(); as message) {
+        <p class="error" role="alert"><mat-icon>error_outline</mat-icon> {{ message }}</p>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <mat-form-field>
+          <mat-label>E-mail address</mat-label>
+          <mat-icon matPrefix>mail_outline</mat-icon>
+          <input matInput type="email" formControlName="email" autocomplete="username" required />
+          @if (form.controls.email.hasError('email')) {
+            <mat-error>Enter a valid e-mail address</mat-error>
+          } @else if (form.controls.email.hasError('required')) {
+            <mat-error>E-mail address is required</mat-error>
+          }
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>Password</mat-label>
+          <mat-icon matPrefix>lock_outline</mat-icon>
+          <input
+            matInput
+            [type]="showPassword() ? 'text' : 'password'"
+            formControlName="password"
+            autocomplete="current-password"
+            required
+          />
+          <button
+            mat-icon-button
+            matSuffix
+            type="button"
+            (click)="showPassword.set(!showPassword())"
+            [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+          >
+            <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          @if (form.controls.password.hasError('required')) {
+            <mat-error>Password is required</mat-error>
+          }
+        </mat-form-field>
+        <button mat-flat-button class="submit" type="submit" [disabled]="submitting()">
+          Sign in
+        </button>
+      </form>
+    </div>
+
+    <aside class="demo" aria-label="Demo accounts">
+      <div class="demo-title">
+        <mat-icon>science</mat-icon>
+        <strong>Demo accounts</strong>
+        <span class="muted">password in the README</span>
+      </div>
+      <div class="demo-list">
+        <button type="button" (click)="fill('thandi@example.com')">
+          <strong>Thandi Nkosi</strong><span>Customer · thandi&#64;example.com</span>
+        </button>
+        <button type="button" (click)="fill('james@example.com')">
+          <strong>James Smith</strong><span>Customer · james&#64;example.com</span>
+        </button>
+        <button type="button" (click)="fill('agent@example.com')">
+          <strong>Lerato Mokoena</strong><span>Disputes agent · agent&#64;example.com</span>
+        </button>
+      </div>
+    </aside>
+  </section>
+</div>

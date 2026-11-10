@@ -1,10 +1,13 @@
 // Shared layout for list pages (page header, filter bar, table card, empty/error states).
 
 .page-header {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 
   h1 {
-    font: var(--mat-sys-headline-small);
+    font-size: 26px;
+    line-height: 32px;
+    font-weight: 700;
+    letter-spacing: -0.2px;
     margin: 0;
   }
 }
@@ -33,7 +36,8 @@
 .table-card {
   position: relative;
   border: 1px solid var(--mat-sys-outline-variant);
-  border-radius: 12px;
+  border-radius: var(--brand-radius);
+  box-shadow: var(--brand-shadow);
   overflow: hidden;
   background: var(--mat-sys-surface);
 
@@ -43,6 +47,15 @@
     left: 0;
     right: 0;
     z-index: 2;
+  }
+
+  th.mat-mdc-header-cell {
+    background: #f9fafc;
+    color: var(--mat-sys-on-surface-variant);
+    font-weight: 500;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.6px;
   }
 }
 
@@ -54,10 +67,17 @@ table {
   width: 100%;
 }
 
+tr.mat-mdc-row {
+  transition: background-color 120ms ease;
+
+  &:hover {
+    background: #f4f7fc;
+  }
+}
+
 tr.clickable {
   cursor: pointer;
 
-  &:hover,
   &:focus-visible {
     background: var(--mat-sys-surface-container);
     outline: none;
@@ -69,22 +89,57 @@ tr.clickable {
   font: var(--mat-sys-body-small);
 }
 
+// Merchant name with a coloured initials avatar.
+.merchant-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 180px;
+}
+
+.merchant-avatar {
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
 .state {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  padding: 48px 16px;
+  padding: 56px 16px;
   color: var(--mat-sys-on-surface-variant);
   text-align: center;
 
-  mat-icon {
-    font-size: 40px;
-    width: 40px;
-    height: 40px;
+  .state-icon {
+    display: grid;
+    place-items: center;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: #eaf0fa;
+    color: var(--brand-navy-soft);
+
+    mat-icon {
+      font-size: 32px;
+      width: 32px;
+      height: 32px;
+    }
   }
 
-  &.error {
+  p {
+    margin: 4px 0 8px;
+  }
+
+  &.error .state-icon {
+    background: #fdecec;
     color: var(--mat-sys-error);
   }
 }

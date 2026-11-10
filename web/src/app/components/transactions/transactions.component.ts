@@ -1,5 +1,5 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -29,7 +29,9 @@ import { problemMessage } from '../shared/problem-message.util';
 import { TransactionsService } from '../../services/transactions.service';
 import { Account, Transaction, TransactionQuery } from '../../models/transaction.model';
 import { PagedResult } from '../../models/common.model';
+import { merchantColour, merchantInitials } from '../shared/merchant-avatar.util';
 import { StatusChipComponent } from '../shared/status-chip/status-chip.component';
+import { SummaryCardsComponent } from '../shared/summary-cards/summary-cards.component';
 import { DisputeDialogComponent } from './dispute-dialog/dispute-dialog.component';
 
 interface LoadResult {
@@ -63,6 +65,7 @@ function toIsoDate(date: Date | null, endOfDay = false): string | undefined {
     MatTooltipModule,
     MatProgressBarModule,
     StatusChipComponent,
+    SummaryCardsComponent,
   ],
   templateUrl: './transactions.component.html',
   styleUrl: './transactions.component.scss',
@@ -75,6 +78,9 @@ export class TransactionsComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly reload$ = new Subject<TransactionQuery>();
 
+  protected readonly merchantColour = merchantColour;
+  protected readonly merchantInitials = merchantInitials;
+  private readonly summary = viewChild(SummaryCardsComponent);
   protected readonly columns = ['postedAt', 'merchant', 'account', 'amount', 'dispute', 'actions'];
   protected readonly accounts = signal<Account[]>([]);
   protected readonly result = signal<PagedResult<Transaction> | null>(null);
@@ -170,6 +176,7 @@ export class TransactionsComponent implements OnInit {
       .subscribe((dispute) => {
         if (!dispute) return;
         this.load();
+        this.summary()?.refresh();
         this.snackBar
           .open('Your dispute has been submitted.', 'View', { duration: 8000 })
           .onAction()

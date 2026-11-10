@@ -1,42 +1,58 @@
 import { Component, computed, input } from '@angular/core';
+import { MatIconModule } from '@angular/material/icon';
 import { statusLabel } from '../dispute-labels.util';
 import { DisputeStatus } from '../../../models/dispute.model';
 
+const TONES: Record<DisputeStatus, { tone: string; icon: string }> = {
+  Submitted: { tone: 'open', icon: 'schedule' },
+  UnderReview: { tone: 'review', icon: 'manage_search' },
+  Upheld: { tone: 'good', icon: 'check_circle' },
+  Rejected: { tone: 'bad', icon: 'cancel' },
+  Withdrawn: { tone: 'neutral', icon: 'undo' },
+};
+
 @Component({
   selector: 'app-status-chip',
-  template: `<span [class]="'chip ' + tone()">{{ label() }}</span>`,
+  imports: [MatIconModule],
+  template: `<span [class]="'chip ' + style().tone"
+    ><mat-icon aria-hidden="true">{{ style().icon }}</mat-icon
+    >{{ label() }}</span
+  >`,
   styles: `
     .chip {
-      display: inline-block;
-      padding: 2px 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px 3px 6px;
       border-radius: 999px;
       white-space: nowrap;
       font: var(--mat-sys-label-medium);
-      border: 1px solid transparent;
+      font-weight: 500;
+    }
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
     }
     .open {
-      background: #fff4d6;
-      color: #6b4b00;
-      border-color: #f1d48a;
+      background: #fff1e0;
+      color: #8a4b00;
     }
     .review {
-      background: #e3ecff;
-      color: #1d3f8a;
-      border-color: #b5c8f5;
+      background: #e6edf8;
+      color: #17407f;
     }
     .good {
-      background: #ddf5e4;
+      background: #e3f4e8;
       color: #11592c;
-      border-color: #a7dbb8;
     }
     .bad {
-      background: #fde3e3;
-      color: #8a1c1c;
-      border-color: #f2b1b1;
+      background: #fde7e8;
+      color: #9b1c22;
     }
     .neutral {
-      background: var(--mat-sys-surface-container-high);
-      color: var(--mat-sys-on-surface-variant);
+      background: #eef0f3;
+      color: #4b5563;
     }
   `,
 })
@@ -44,18 +60,5 @@ export class StatusChipComponent {
   readonly status = input.required<DisputeStatus>();
 
   protected readonly label = computed(() => statusLabel(this.status()));
-  protected readonly tone = computed(() => {
-    switch (this.status()) {
-      case 'Submitted':
-        return 'open';
-      case 'UnderReview':
-        return 'review';
-      case 'Upheld':
-        return 'good';
-      case 'Rejected':
-        return 'bad';
-      default:
-        return 'neutral';
-    }
-  });
+  protected readonly style = computed(() => TONES[this.status()] ?? TONES.Withdrawn);
 }

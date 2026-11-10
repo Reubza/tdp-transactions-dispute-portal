@@ -26,40 +26,49 @@ interface NavItem {
   template: `
     <a class="skip-link" href="#main">Skip to content</a>
     <mat-toolbar class="toolbar">
-      <a class="brand" [routerLink]="home()">
-        <mat-icon aria-hidden="true">account_balance</mat-icon>
-        <span>Dispute Portal</span>
-      </a>
-      <nav class="nav" aria-label="Main">
-        @for (item of nav(); track item.path) {
-          <a
-            mat-button
-            [routerLink]="item.path"
-            routerLinkActive="active"
-            ariaCurrentWhenActive="page"
-          >
-            <mat-icon>{{ item.icon }}</mat-icon>
-            <span class="nav-label">{{ item.label }}</span>
-          </a>
-        }
-      </nav>
-      <span class="spacer"></span>
-      @if (auth.user(); as user) {
-        <button mat-button [matMenuTriggerFor]="menu" aria-label="Account menu">
-          <mat-icon>account_circle</mat-icon>
-          <span class="nav-label">{{ user.fullName }}</span>
-        </button>
-        <mat-menu #menu="matMenu">
-          <div class="menu-header">
-            <strong>{{ user.fullName }}</strong>
-            <small>{{ user.email }} · {{ user.role }}</small>
-          </div>
-          <button mat-menu-item (click)="auth.logout()">
-            <mat-icon>logout</mat-icon>
-            <span>Sign out</span>
+      <div class="toolbar-inner">
+        <a class="brand" [routerLink]="home()" aria-label="Resolve home">
+          <img src="logo.svg" alt="" width="32" height="32" />
+          <span class="brand-text">
+            <strong>Resolve</strong>
+            <small>transaction disputes</small>
+          </span>
+        </a>
+        <nav class="nav" aria-label="Main">
+          @for (item of nav(); track item.path) {
+            <a
+              class="nav-link"
+              [routerLink]="item.path"
+              routerLinkActive="active"
+              ariaCurrentWhenActive="page"
+            >
+              <mat-icon>{{ item.icon }}</mat-icon>
+              <span class="nav-label">{{ item.label }}</span>
+            </a>
+          }
+        </nav>
+        <span class="spacer"></span>
+        @if (auth.user(); as user) {
+          <button class="user" type="button" [matMenuTriggerFor]="menu" aria-label="Account menu">
+            <span class="avatar" aria-hidden="true">{{ initials() }}</span>
+            <span class="user-text">
+              <strong>{{ user.fullName }}</strong>
+              <small>{{ user.role === 'Agent' ? 'Disputes team' : 'Customer' }}</small>
+            </span>
+            <mat-icon class="chevron">expand_more</mat-icon>
           </button>
-        </mat-menu>
-      }
+          <mat-menu #menu="matMenu" xPosition="before">
+            <div class="menu-header">
+              <strong>{{ user.fullName }}</strong>
+              <small>{{ user.email }}</small>
+            </div>
+            <button mat-menu-item (click)="auth.logout()">
+              <mat-icon>logout</mat-icon>
+              <span>Sign out</span>
+            </button>
+          </mat-menu>
+        }
+      </div>
     </mat-toolbar>
     <main id="main" class="content" tabindex="-1">
       <router-outlet />
@@ -75,36 +84,122 @@ interface NavItem {
       position: sticky;
       top: 0;
       z-index: 10;
-      gap: 8px;
-      background: var(--mat-sys-primary);
-      color: var(--mat-sys-on-primary);
-      --mat-button-text-label-text-color: var(--mat-sys-on-primary);
+      height: 64px;
+      padding: 0 16px;
+      background: var(--brand-navy);
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgb(11 42 91 / 25%);
+    }
+    .toolbar-inner {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      width: 100%;
+      max-width: 1200px;
+      height: 100%;
+      margin: 0 auto;
     }
     .brand {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       color: inherit;
       text-decoration: none;
-      font-weight: 500;
-      margin-right: 16px;
+    }
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.1;
+    }
+    .brand-text strong {
+      font-size: 18px;
+      letter-spacing: 0.2px;
+    }
+    .brand-text small,
+    .user-text small {
+      font-size: 11px;
+      font-weight: 400;
+      opacity: 0.75;
     }
     .nav {
       display: flex;
       gap: 4px;
+      align-self: stretch;
     }
-    .nav a.active {
-      background: color-mix(in srgb, var(--mat-sys-on-primary) 16%, transparent);
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 14px;
+      color: rgb(255 255 255 / 80%);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      border-bottom: 3px solid transparent;
+      border-top: 3px solid transparent;
+    }
+    .nav-link mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+    .nav-link:hover {
+      color: #ffffff;
+    }
+    .nav-link.active {
+      color: #ffffff;
+      border-bottom-color: var(--brand-accent);
+    }
+    .nav-link:focus-visible,
+    .user:focus-visible {
+      outline: 2px solid #ffffff;
+      outline-offset: -2px;
     }
     .spacer {
       flex: 1;
+    }
+    .user {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 8px;
+      border: 0;
+      border-radius: 10px;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+    .user:hover {
+      background: rgb(255 255 255 / 10%);
+    }
+    .user-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.2;
+      font-size: 13px;
+    }
+    .avatar {
+      display: grid;
+      place-items: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: var(--brand-accent);
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .chevron {
+      opacity: 0.75;
     }
     .content {
       flex: 1;
       width: 100%;
       max-width: 1200px;
       margin: 0 auto;
-      padding: 24px 16px 48px;
+      padding: 28px 16px 48px;
       box-sizing: border-box;
       outline: none;
     }
@@ -125,12 +220,23 @@ interface NavItem {
       padding: 8px;
     }
     @media (max-width: 720px) {
+      .toolbar {
+        padding: 0 8px;
+      }
+      .toolbar-inner {
+        gap: 8px;
+      }
       .nav-label,
-      .brand span {
+      .brand-text,
+      .user-text,
+      .chevron {
         display: none;
       }
+      .nav-link {
+        padding: 0 10px;
+      }
       .content {
-        padding: 16px 8px 32px;
+        padding: 16px 12px 32px;
       }
     }
   `,
@@ -139,6 +245,15 @@ export class LayoutComponent {
   protected readonly auth = inject(AuthService);
 
   protected readonly home = computed(() => this.auth.homeFor(this.auth.user()?.role));
+
+  protected readonly initials = computed(() =>
+    (this.auth.user()?.fullName ?? '')
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0].toUpperCase())
+      .join(''),
+  );
 
   protected readonly nav = computed<NavItem[]>(() =>
     this.auth.user()?.role === 'Agent'

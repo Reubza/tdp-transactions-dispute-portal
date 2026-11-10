@@ -53,7 +53,8 @@ h3 {
 
 .outcome {
   padding: 8px 12px;
-  border-left: 3px solid var(--mat-sys-primary);
+  border-left: 3px solid var(--brand-accent);
+  border-radius: 0 8px 8px 0;
   background: var(--mat-sys-surface-container-low);
 }
 
@@ -107,4 +108,9 @@ h3 {
 .note {
   margin: 4px 0 0;
   white-space: pre-wrap;
+}
+
+mat-card {
+  border-radius: var(--brand-radius);
+  box-shadow: var(--brand-shadow);
 }

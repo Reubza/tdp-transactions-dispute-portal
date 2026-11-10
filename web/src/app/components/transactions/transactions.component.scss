@@ -23,3 +23,13 @@
 .actions {
   text-align: right;
 }
+
+.mat-column-postedAt {
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .mat-column-account {
+    display: none;
+  }
+}

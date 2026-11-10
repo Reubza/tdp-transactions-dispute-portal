@@ -6,7 +6,7 @@ export const routes: Routes = [
   {
     path: 'login',
     canActivate: [anonymousGuard],
-    title: 'Sign in · Dispute Portal',
+    title: 'Sign in · Resolve',
     loadComponent: () => import('./components/login/login.component').then((m) => m.LoginComponent),
   },
   {
@@ -17,7 +17,7 @@ export const routes: Routes = [
         path: 'transactions',
         canActivate: [roleGuard],
         data: { role: 'Customer' },
-        title: 'Transactions · Dispute Portal',
+        title: 'Transactions · Resolve',
         loadComponent: () =>
           import('./components/transactions/transactions.component').then(
             (m) => m.TransactionsComponent,
@@ -27,7 +27,7 @@ export const routes: Routes = [
         path: 'disputes',
         canActivate: [roleGuard],
         data: { role: 'Customer' },
-        title: 'My disputes · Dispute Portal',
+        title: 'My disputes · Resolve',
         loadComponent: () =>
           import('./components/disputes/disputes.component').then((m) => m.DisputesComponent),
       },
@@ -35,7 +35,7 @@ export const routes: Routes = [
         path: 'disputes/:id',
         canActivate: [roleGuard],
         data: { role: 'Customer', mode: 'customer' },
-        title: 'Dispute · Dispute Portal',
+        title: 'Dispute · Resolve',
         loadComponent: () =>
           import('./components/disputes/dispute-detail/dispute-detail.component').then(
             (m) => m.DisputeDetailComponent,
@@ -45,7 +45,7 @@ export const routes: Routes = [
         path: 'agent/disputes',
         canActivate: [roleGuard],
         data: { role: 'Agent', mode: 'agent' },
-        title: 'Dispute queue · Dispute Portal',
+        title: 'Dispute queue · Resolve',
         loadComponent: () =>
           import('./components/disputes/disputes.component').then((m) => m.DisputesComponent),
       },
@@ -53,7 +53,7 @@ export const routes: Routes = [
         path: 'agent/disputes/:id',
         canActivate: [roleGuard],
         data: { role: 'Agent', mode: 'agent' },
-        title: 'Dispute · Dispute Portal',
+        title: 'Dispute · Resolve',
         loadComponent: () =>
           import('./components/disputes/dispute-detail/dispute-detail.component').then(
             (m) => m.DisputeDetailComponent,

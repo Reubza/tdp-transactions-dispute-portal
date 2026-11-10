@@ -1,4 +1,10 @@
-# Transactions Dispute Portal
+<p align="center">
+  <img src="web/public/logo.svg" alt="Resolve logo" width="88" height="88" />
+</p>
+
+<h1 align="center">Resolve — transaction disputes</h1>
+
+<p align="center"><em>Built for the Capitec Software Engineer assessment.</em></p>
 
 A full-stack web application where bank customers can **view their transactions**, **dispute** the ones that look wrong,
 and follow **the full history of every dispute** they have raised. A back-office **agent** view lets the bank work the
@@ -7,6 +13,21 @@ dispute queue (start review, uphold, decline), so the customer's history reflect
 - **Backend:** .NET 10 / ASP.NET Core Web API, EF Core 10, PostgreSQL 17, JWT bearer auth
 - **Frontend:** Angular 21 (standalone components, signals, Angular Material 3)
 - **Delivery:** a single multi-stage `Dockerfile` (API serves the SPA), `docker-compose.yml` with PostgreSQL, GitHub Actions CI
+
+![Transactions overview](docs/screenshots/02-transactions.png)
+
+<details>
+<summary><strong>More screenshots</strong></summary>
+
+| Sign in | Raise a dispute |
+| --- | --- |
+| ![Sign in](docs/screenshots/01-login.png) | ![Dispute dialog](docs/screenshots/03-dispute-dialog.png) |
+| **Dispute history** | **Dispute timeline** |
+| ![Dispute history](docs/screenshots/04-dispute-history.png) | ![Dispute detail](docs/screenshots/05-dispute-detail.png) |
+| **Agent queue** | **Mobile** |
+| ![Agent queue](docs/screenshots/06-agent-queue.png) | <img src="docs/screenshots/07-mobile-transactions.png" alt="Mobile transactions" width="260" /> |
+
+</details>
 
 ---
 
@@ -22,7 +43,7 @@ Then open **http://localhost:8080**.
 
 | Who                 | E-mail               | Password    | What they can do                                     |
 | ------------------- | -------------------- | ----------- | ---------------------------------------------------- |
-| Customer            | `thandi@example.com` | `Demo@1234` | 2 accounts, ~80 transactions, disputes in all states |
+| Customer            | `thandi@example.com` | `Demo@1234` | 2 accounts, ~115 transactions incl. debit orders, disputes in every state |
 | Customer            | `james@example.com`  | `Demo@1234` | 1 account, one open dispute                          |
 | Back-office agent   | `agent@example.com`  | `Demo@1234` | Sees every customer's disputes and resolves them      |
 
@@ -30,7 +51,26 @@ On startup the container applies database migrations and seeds the demo data int
 controlled by configuration, see below). Interactive API docs are at **http://localhost:8080/scalar** and the OpenAPI
 document at `/openapi/v1.json`.
 
-To stop and remove the data volume: `docker compose down -v`.
+To stop and remove the data volume: `docker compose down -v`. Run that before a demo to start from fresh seed data.
+
+### Demo walkthrough (about 5 minutes)
+
+The seed data includes a realistic South African scenario: Takealot charged order **#TK-104732** (R2,499.00) twice,
+three minutes apart, on Thandi's cheque account.
+
+1. **Sign in as Thandi** (`thandi@example.com`). The overview shows her two accounts and her open and closed disputes.
+2. **Spot the problem.** Search for `TK-104732`, or scan the list: two identical Takealot charges appear.
+3. **Dispute it.** Click *Dispute* on the second charge, choose *I was charged more than once*, explain, and submit.
+   The row now shows *Submitted* and can't be disputed again (the API enforces one open dispute per transaction).
+4. **See it in history.** Open *My disputes*. The new dispute sits alongside past ones in every state: upheld,
+   declined, withdrawn and under review.
+5. **Switch to the agent** (sign out, then `agent@example.com`). The queue shows open disputes across customers.
+   Open Thandi's, click *Start review* and add a note.
+6. **Resolve it.** Click *Uphold* with a resolution note (required). The dispute can no longer change.
+7. **Back as Thandi**, open the dispute: the timeline shows each step, who made it and when, and the outcome.
+
+Other things worth showing: transactions older than 120 days, pending ones and salary credits can't be disputed
+(hover the disabled button for the reason); James can't see Thandi's disputes; the API docs at `/scalar`.
 
 ### Running the image on its own
 

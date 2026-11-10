@@ -48,14 +48,14 @@
 
   @if (error(); as message) {
     <div class="state error" role="alert">
-      <mat-icon>error_outline</mat-icon>
+      <span class="state-icon"><mat-icon>error_outline</mat-icon></span>
       <p>{{ message }}</p>
       <button mat-stroked-button (click)="load()">Try again</button>
     </div>
   } @else if (result(); as page) {
     @if (page.items.length === 0) {
       <div class="state">
-        <mat-icon>inbox</mat-icon>
+        <span class="state-icon"><mat-icon>inbox</mat-icon></span>
         @if (isAgent()) {
           <p>No disputes match your filters.</p>
         } @else {
@@ -79,9 +79,19 @@
           <ng-container matColumnDef="merchant">
             <th mat-header-cell *matHeaderCellDef>Transaction</th>
             <td mat-cell *matCellDef="let d">
-              <a class="row-link" [routerLink]="detailLink(d)">{{ d.merchant }}</a>
-              <div class="muted">
-                {{ d.transactionPostedAt | date: 'd MMM y' }} · {{ d.transactionReference }}
+              <div class="merchant-cell">
+                <span
+                  class="merchant-avatar"
+                  aria-hidden="true"
+                  [style.background]="merchantColour(d.merchant)"
+                  >{{ merchantInitials(d.merchant) }}</span
+                >
+                <div>
+                  <a class="row-link" [routerLink]="detailLink(d)">{{ d.merchant }}</a>
+                  <div class="muted">
+                    {{ d.transactionPostedAt | date: 'd MMM y' }} · {{ d.transactionReference }}
+                  </div>
+                </div>
               </div>
             </td>
           </ng-container>
