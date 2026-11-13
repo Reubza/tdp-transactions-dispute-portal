@@ -9,7 +9,8 @@
 **/TestResults/
 .git/
 .github/
-tests/
+tests/IntegrationTests/
 src/Api/wwwroot/
 docker-compose*.yml
 *.md
+.env

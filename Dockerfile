@@ -1,12 +1,22 @@
 # syntax=docker/dockerfile:1
+#
+# Build and run:   docker build -t resolve .          (needs PostgreSQL at run time, see README)
+# Run the tests:   docker build --target test .       (backend unit tests + frontend tests and format check)
 
-# ---- 1. Build the Angular SPA -------------------------------------------------
-FROM node:24-alpine AS web
+# ---- 1. Angular SPA: dependencies and sources ---------------------------------
+FROM node:24-alpine AS web-deps
 WORKDIR /web
 COPY web/package.json web/package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY web/ ./
+
+# ---- 1a. Angular production build ---------------------------------------------
+FROM web-deps AS web
 RUN npm run build -- --configuration production
+
+# ---- 1b. Frontend checks (only built for --target test) -----------------------
+FROM web-deps AS web-test
+RUN npm run format:check && npm run test:ci && touch /web/.tests-passed
 
 # ---- 2. Build and publish the ASP.NET Core API (with the SPA in wwwroot) -------
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
@@ -22,7 +32,14 @@ COPY --from=web /web/dist/web/browser/ src/Api/wwwroot/
 RUN dotnet publish src/Api/Api.csproj \
       --configuration Release --no-restore --output /app /p:UseAppHost=false
 
-# ---- 3. Runtime image ----------------------------------------------------------
+# ---- 2a. Backend unit tests + gate on the frontend checks (--target test) ------
+# Integration tests are not run here: they start PostgreSQL with Testcontainers, which needs the Docker socket.
+FROM build AS test
+COPY tests/UnitTests/ tests/UnitTests/
+RUN dotnet test tests/UnitTests --configuration Release
+COPY --from=web-test /web/.tests-passed /tmp/
+
+# ---- 3. Runtime image (the default target) -------------------------------------
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS runtime
 WORKDIR /app
 ENV ASPNETCORE_HTTP_PORTS=8080 \

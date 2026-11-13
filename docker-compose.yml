@@ -1,6 +1,8 @@
-# Local/demo stack: PostgreSQL + the portal (API and SPA in one container).
-#   docker compose up --build     ->  http://localhost:8080
-# Secrets below are development defaults; override them via environment variables or a .env file.
+# Local/demo stack: PostgreSQL + the portal (API and SPA in one container). Only Docker is required.
+#   docker compose up --build     ->  http://localhost:8080   (whole system)
+#   docker compose up -d db       ->  PostgreSQL on localhost:5433 only, for `dotnet run --project src/Api`
+# Secrets below are development defaults; override them via environment variables or a .env file
+# (see .env.example).
 name: dispute-portal
 
 services:
@@ -15,6 +17,9 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+    ports:
+      # Loopback only, on 5433 so it never clashes with a PostgreSQL already installed on 5432.
+      - "127.0.0.1:${DB_PORT:-5433}:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
     restart: unless-stopped

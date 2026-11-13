@@ -65,11 +65,13 @@ try
 
     await app.Services.InitialiseDatabaseAsync();
     await app.RunAsync();
+    return 0;
 }
 catch (Exception ex) when (ex is not HostAbortedException)
 {
+    // Logged once with the full exception; exit non-zero without a second unhandled-exception crash dump.
     Log.Fatal(ex, "Application terminated unexpectedly");
-    throw;
+    return 1;
 }
 finally
 {

@@ -11,6 +11,10 @@ public static class DependencyInjection
 {
     public const string ConnectionStringName = "DisputePortal";
 
+    private const string MissingConnectionStringMessage =
+        $"Connection string '{ConnectionStringName}' is not configured. Set the ConnectionStrings__{ConnectionStringName} " +
+        "environment variable to a PostgreSQL connection string, or run the whole system with 'docker compose up --build'.";
+
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(configuration);
@@ -18,13 +22,23 @@ public static class DependencyInjection
         // Resolved lazily so configuration added late (e.g. by test hosts) is honoured.
         services.AddDbContext<AppDbContext>((sp, options) =>
         {
-            var connectionString = sp.GetRequiredService<IConfiguration>().GetConnectionString(ConnectionStringName)
-                ?? throw new InvalidOperationException($"Connection string '{ConnectionStringName}' is not configured.");
+            var connectionString = sp.GetRequiredService<IConfiguration>().GetConnectionString(ConnectionStringName);
+            if (string.IsNullOrWhiteSpace(connectionString))
+            {
+                throw new InvalidOperationException(MissingConnectionStringMessage);
+            }
+
             ConfigureDbContext(options, connectionString);
         });
         services.AddScoped<IApplicationDbContext>(sp => sp.GetRequiredService<AppDbContext>());
 
-        services.AddOptions<DatabaseOptions>().Bind(configuration.GetSection(DatabaseOptions.SectionName));
+        services.AddOptions<DatabaseOptions>()
+            .Bind(configuration.GetSection(DatabaseOptions.SectionName))
+            .ValidateDataAnnotations()
+            .Validate<IConfiguration>(
+                (_, config) => !string.IsNullOrWhiteSpace(config.GetConnectionString(ConnectionStringName)),
+                MissingConnectionStringMessage)
+            .ValidateOnStart();
         services.AddOptions<JwtOptions>()
             .Bind(configuration.GetSection(JwtOptions.SectionName))
             .ValidateDataAnnotations()
