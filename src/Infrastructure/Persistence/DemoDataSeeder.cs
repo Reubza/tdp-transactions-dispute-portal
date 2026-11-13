@@ -97,9 +97,10 @@ public sealed class DemoDataSeeder(AppDbContext db, IPasswordHasher passwordHash
 
         db.Transactions.AddRange(thandiChequeTx.Concat(thandiCardTx).Concat(jamesTx));
 
-        var disputeWindow = TimeSpan.FromDays(3650); // seeded disputes are back-dated; the window is enforced at runtime
-        Dispute RaiseAt(Transaction tx, User customer, DisputeReason reason, string description, TimeSpan window) =>
-            Dispute.Raise(tx, customer.Id, reason, description, null, Min(tx.PostedAt.AddDays(2), now), window);
+        // Seeded disputes are back-dated, so the windows are wide here; the real ones are enforced at runtime.
+        var disputeWindow = new DisputeRules(TimeSpan.FromDays(3650), TimeSpan.FromDays(3650));
+        Dispute RaiseAt(Transaction tx, User customer, DisputeReason reason, string description, DisputeRules rules) =>
+            Dispute.Raise(tx, [], customer.Id, reason, description, null, Min(tx.PostedAt.AddDays(2), now), rules);
         var olderCardSpend = thandiChequeTx.Concat(thandiCardTx)
             .Where(t => t.Direction == TransactionDirection.Debit && t.Status == TransactionStatus.Posted && t.Description is null)
             .OrderBy(t => t.PostedAt)
@@ -111,7 +112,11 @@ public sealed class DemoDataSeeder(AppDbContext db, IPasswordHasher passwordHash
         upheld.Resolve(agent.Id, upheld: true,
             "The merchant confirmed a duplicate charge. The amount has been refunded to your account.", upheld.CreatedAt.AddDays(4));
 
-        var rejected = RaiseAt(olderCardSpend[12], thandi, DisputeReason.Unauthorised,
+        // Rejected recently enough (about two weeks ago) that Thandi can still appeal it once.
+        var recentlyRejectedTx = olderCardSpend
+            .Where(t => t != olderCardSpend[5] && t != olderCardSpend[20] && t != undelivered)
+            .Last(t => t.PostedAt < now.AddDays(-25));
+        var rejected = RaiseAt(recentlyRejectedTx, thandi, DisputeReason.Unauthorised,
             "I don't recognise this transaction and did not authorise it.", disputeWindow);
         rejected.StartReview(agent.Id, null, rejected.CreatedAt.AddDays(1));
         rejected.Resolve(agent.Id, upheld: false,

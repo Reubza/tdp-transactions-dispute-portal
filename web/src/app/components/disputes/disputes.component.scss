@@ -31,3 +31,15 @@ mat-button-toggle-group {
     display: none;
   }
 }
+
+.appeal-tag {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--mat-sys-secondary-container);
+  color: var(--mat-sys-on-secondary-container);
+  vertical-align: middle;
+}

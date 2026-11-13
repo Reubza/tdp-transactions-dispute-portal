@@ -178,7 +178,13 @@ export class TransactionsComponent implements OnInit {
         this.load();
         this.summary()?.refresh();
         this.snackBar
-          .open('Your dispute has been submitted.', 'View', { duration: 8000 })
+          .open(
+            dispute.summary.appealOfDisputeId
+              ? 'Your appeal has been submitted.'
+              : 'Your dispute has been submitted.',
+            'View',
+            { duration: 8000 },
+          )
           .onAction()
           .subscribe(() => void this.router.navigate(['/disputes', dispute.summary.id]));
       });

@@ -25,6 +25,8 @@ How the system is built and why. To build, run and test it, see the [README](../
 - **My disputes** — the historic view: every dispute ever raised, filterable by open/closed, status and text.
 - Dispute detail with a **status timeline** (who did what, when, and any notes) and the final outcome.
 - Withdraw an open dispute.
+- **Appeal a declined dispute once**, within 30 days of the decision. The *Dispute* button becomes *Appeal*, and the
+  appeal links back to the declined dispute.
 
 **Agent (back office)**
 
@@ -37,9 +39,12 @@ How the system is built and why. To build, run and test it, see the [README](../
 | Rule                                                                                 | Where enforced                                                        |
 | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------- |
 | Customers only ever see their own accounts, transactions and disputes (others → 404) | Query filters in the application services                             |
-| Only **posted debit** transactions can be disputed                                   | `Transaction.CheckDisputable` (domain)                                |
+| Only **posted debit** transactions can be disputed                                   | `Transaction.CheckDisputableType` (domain)                            |
 | Disputes must be raised within **120 days** of posting (configurable)                | Domain + `Disputes:DisputeWindowDays`                                  |
-| At most **one open dispute** per transaction (a new one is allowed after closure)    | Application check **and** a filtered unique index in PostgreSQL        |
+| At most **one open dispute** per transaction                                         | `DisputeEligibility` **and** a filtered unique index in PostgreSQL → `409` |
+| **Never again after an upheld dispute**: the customer was refunded, and a second dispute would risk a double refund | `DisputeEligibility` → `422 dispute.already_resolved` |
+| A **rejected** dispute can be **appealed once**, within **30 days** of the decision (configurable); the posting window no longer applies. A rejected appeal is final | `DisputeEligibility` → `422 dispute.appeal_window_expired` / `dispute.appeal_exhausted`, **and** a filtered unique index on `appeal_of_dispute_id` |
+| A **withdrawn** dispute (or appeal) doesn't count: nothing was decided, so it can be raised again | `DisputeEligibility` |
 | Lifecycle `Submitted → UnderReview → Upheld \| Rejected`; `Withdrawn` while open      | `Dispute` aggregate state machine                                     |
 | Every status change is recorded, append-only                                         | `DisputeStatusChange` rows written by the aggregate                   |
 | Concurrent updates to the same dispute don't silently overwrite each other           | Optimistic concurrency on PostgreSQL `xmin` → `409 Conflict`          |
@@ -127,6 +132,7 @@ Standard ASP.NET Core configuration: `appsettings.json` → `appsettings.{Enviro
 | `Jwt:Issuer` / `Jwt:Audience`        | `dispute-portal…`  |                                                                    |
 | `Jwt:AccessTokenLifetimeMinutes`     | `30`               | The SPA signs the user out when the token expires                  |
 | `Disputes:DisputeWindowDays`         | `120`              |                                                                    |
+| `Disputes:AppealWindowDays`          | `30`               | How long after a rejection the customer may appeal (once)          |
 | `Database:MigrateOnStartup`          | `false`            | `true` in Development and docker-compose                           |
 | `Database:StartupConnectTimeoutSeconds` | `30`          | How long startup waits for PostgreSQL before failing with a clear message |
 | `Database:Seed:Enabled`              | `false`            | Seeds demo data into an empty database only                        |

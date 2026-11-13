@@ -56,6 +56,7 @@ internal sealed class DisputeConfiguration : IEntityTypeConfiguration<Dispute>
 {
     public const string OpenDisputePerTransactionIndex = "ix_disputes_open_per_transaction";
     public const string IdempotencyKeyIndex = "ix_disputes_customer_id_idempotency_key";
+    public const string OneAppealPerDisputeIndex = "ix_disputes_one_appeal_per_dispute";
 
     public void Configure(EntityTypeBuilder<Dispute> builder)
     {
@@ -66,6 +67,9 @@ internal sealed class DisputeConfiguration : IEntityTypeConfiguration<Dispute>
         builder.Property(d => d.IdempotencyKey).HasMaxLength(100);
         builder.Property(d => d.Version).IsRowVersion();
         builder.Ignore(d => d.IsOpen);
+        builder.Ignore(d => d.IsAppeal);
+
+        builder.HasOne<Dispute>().WithMany().HasForeignKey(d => d.AppealOfDisputeId).OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(d => d.Transaction).WithMany().HasForeignKey(d => d.TransactionId)
             .OnDelete(DeleteBehavior.Restrict);
@@ -79,6 +83,12 @@ internal sealed class DisputeConfiguration : IEntityTypeConfiguration<Dispute>
             .HasDatabaseName(OpenDisputePerTransactionIndex)
             .IsUnique()
             .HasFilter($"status IN ('{nameof(DisputeStatus.Submitted)}', '{nameof(DisputeStatus.UnderReview)}')");
+
+        // Backstop for the appeal rule: a rejected dispute has at most one appeal (a withdrawn appeal doesn't count).
+        builder.HasIndex(d => d.AppealOfDisputeId)
+            .HasDatabaseName(OneAppealPerDisputeIndex)
+            .IsUnique()
+            .HasFilter($"appeal_of_dispute_id IS NOT NULL AND status <> '{nameof(DisputeStatus.Withdrawn)}'");
 
         builder.HasIndex(d => new { d.CustomerId, d.IdempotencyKey })
             .HasDatabaseName(IdempotencyKeyIndex)

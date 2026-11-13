@@ -69,7 +69,11 @@ public sealed class Transaction
     /// Returns <c>null</c> if the transaction may be disputed at <paramref name="now"/>,
     /// otherwise the reason it may not.
     /// </summary>
-    public DomainException? CheckDisputable(DateTimeOffset now, TimeSpan disputeWindow)
+    public DomainException? CheckDisputable(DateTimeOffset now, TimeSpan disputeWindow) =>
+        CheckDisputableType() ?? CheckWithinWindow(now, disputeWindow);
+
+    /// <summary>Only posted debits can ever be disputed.</summary>
+    public DomainException? CheckDisputableType()
     {
         if (Direction != TransactionDirection.Debit)
         {
@@ -81,13 +85,14 @@ public sealed class Transaction
             return new DomainException(DisputeErrorCodes.NotPosted, "Only posted transactions can be disputed.");
         }
 
-        if (now - PostedAt > disputeWindow)
-        {
-            return new DomainException(
-                DisputeErrorCodes.WindowExpired,
-                $"Transactions can only be disputed within {disputeWindow.TotalDays:0} days of being posted.");
-        }
-
         return null;
     }
+
+    /// <summary>A first dispute must be raised within <paramref name="disputeWindow"/> of posting.</summary>
+    public DomainException? CheckWithinWindow(DateTimeOffset now, TimeSpan disputeWindow) =>
+        now - PostedAt > disputeWindow
+            ? new DomainException(
+                DisputeErrorCodes.WindowExpired,
+                $"Transactions can only be disputed within {disputeWindow.TotalDays:0} days of being posted.")
+            : null;
 }

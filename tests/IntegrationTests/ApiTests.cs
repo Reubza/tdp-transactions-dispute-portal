@@ -10,6 +10,8 @@ using Domain.Disputes;
 using Domain.Transactions;
 using Domain.Users;
 using Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using static IntegrationTests.DisputePortalApiFactory;
 
 namespace IntegrationTests;
@@ -248,6 +250,88 @@ public sealed class ApiTests(DisputePortalApiFactory factory)
     }
 
     [Fact]
+    public async Task Upheld_dispute_cannot_be_raised_again()
+    {
+        var customer = await factory.CreateClientForAsync(DemoDataSeeder.CustomerEmail);
+        var agent = await factory.CreateClientForAsync(DemoDataSeeder.AgentEmail);
+        var dispute = await RaiseAsync(customer);
+        await DecideAsync(agent, dispute.Summary.Id, AgentDisputeAction.Uphold);
+
+        var again = await customer.PostAsJsonAsync("/api/v1/disputes", NewDispute(dispute.Summary.TransactionId), Json);
+
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, again.StatusCode);
+        Assert.Equal(DisputeErrorCodes.AlreadyResolved, await ProblemCodeAsync(again));
+        var transaction = await customer.GetFromJsonAsync<TransactionDto>($"/api/v1/transactions/{dispute.Summary.TransactionId}", Json);
+        Assert.False(transaction!.CanDispute);
+    }
+
+    [Fact]
+    public async Task Rejected_dispute_can_be_appealed_once()
+    {
+        var customer = await factory.CreateClientForAsync(DemoDataSeeder.CustomerEmail);
+        var agent = await factory.CreateClientForAsync(DemoDataSeeder.AgentEmail);
+        var original = await RaiseAsync(customer);
+        await DecideAsync(agent, original.Summary.Id, AgentDisputeAction.Reject);
+
+        var transaction = await customer.GetFromJsonAsync<TransactionDto>($"/api/v1/transactions/{original.Summary.TransactionId}", Json);
+        Assert.True(transaction!.CanDispute);
+        Assert.True(transaction.DisputeIsAppeal);
+
+        var appealResponse = await customer.PostAsJsonAsync("/api/v1/disputes", NewDispute(original.Summary.TransactionId), Json);
+        Assert.Equal(HttpStatusCode.Created, appealResponse.StatusCode);
+        var appeal = await appealResponse.Content.ReadFromJsonAsync<DisputeDetailDto>(Json);
+        Assert.Equal(original.Summary.Id, appeal!.Summary.AppealOfDisputeId);
+
+        await DecideAsync(agent, appeal.Summary.Id, AgentDisputeAction.Reject);
+
+        var third = await customer.PostAsJsonAsync("/api/v1/disputes", NewDispute(original.Summary.TransactionId), Json);
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, third.StatusCode);
+        Assert.Equal(DisputeErrorCodes.AppealExhausted, await ProblemCodeAsync(third));
+    }
+
+    [Fact]
+    public async Task Database_allows_only_one_appeal_per_rejected_dispute()
+    {
+        var customer = await factory.CreateClientForAsync(DemoDataSeeder.CustomerEmail);
+        var agent = await factory.CreateClientForAsync(DemoDataSeeder.AgentEmail);
+        var original = await RaiseAsync(customer);
+        await DecideAsync(agent, original.Summary.Id, AgentDisputeAction.Reject);
+        var appealResponse = await customer.PostAsJsonAsync("/api/v1/disputes", NewDispute(original.Summary.TransactionId), Json);
+        var appeal = await appealResponse.Content.ReadFromJsonAsync<DisputeDetailDto>(Json);
+        await DecideAsync(agent, appeal!.Summary.Id, AgentDisputeAction.Reject);
+
+        // Bypass the application check, as a race would: a second appeal of the same rejected dispute.
+        await using var scope = factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var tx = await db.Transactions.SingleAsync(t => t.Id == original.Summary.TransactionId);
+        var customerId = await db.Disputes.Where(d => d.Id == original.Summary.Id).Select(d => d.CustomerId).SingleAsync();
+        var duplicate = Dispute.Raise(
+            tx,
+            [new PriorDispute(original.Summary.Id, DisputeStatus.Rejected, DateTimeOffset.UtcNow, null)],
+            customerId,
+            DisputeReason.Unauthorised,
+            "Second appeal of the same dispute",
+            null,
+            DateTimeOffset.UtcNow,
+            new DisputeRules(TimeSpan.FromDays(3650), TimeSpan.FromDays(3650)));
+        db.Disputes.Add(duplicate);
+
+        var ex = await Assert.ThrowsAsync<ConflictException>(() => db.SaveChangesAsync());
+        Assert.Equal(DisputeErrorCodes.AppealExhausted, ex.Code);
+    }
+
+    [Fact]
+    public async Task Seeded_rejected_dispute_is_open_for_appeal()
+    {
+        var client = await factory.CreateClientForAsync(DemoDataSeeder.CustomerEmail);
+
+        var page = await client.GetFromJsonAsync<PagedResult<TransactionDto>>("/api/v1/transactions?pageSize=100&disputed=true", Json);
+
+        Assert.Contains(page!.Items, t => t.LatestDisputeStatus == DisputeStatus.Rejected && t.CanDispute && t.DisputeIsAppeal);
+        Assert.Contains(page.Items, t => t.LatestDisputeStatus == DisputeStatus.Upheld && !t.CanDispute);
+    }
+
+    [Fact]
     public async Task Unknown_api_route_is_not_found()
     {
         var client = await factory.CreateClientForAsync(DemoDataSeeder.CustomerEmail);
@@ -257,6 +341,14 @@ public sealed class ApiTests(DisputePortalApiFactory factory)
 
     private static CreateDisputeRequest NewDispute(Guid transactionId) =>
         new(transactionId, DisputeReason.Unauthorised, "I do not recognise this transaction.");
+
+    private static async Task DecideAsync(HttpClient agent, Guid disputeId, AgentDisputeAction decision)
+    {
+        (await agent.PostAsJsonAsync($"/api/v1/agent/disputes/{disputeId}/status", new UpdateDisputeStatusRequest(AgentDisputeAction.StartReview, null), Json))
+            .EnsureSuccessStatusCode();
+        (await agent.PostAsJsonAsync($"/api/v1/agent/disputes/{disputeId}/status", new UpdateDisputeStatusRequest(decision, "Decision recorded"), Json))
+            .EnsureSuccessStatusCode();
+    }
 
     private static async Task<DisputeDetailDto> RaiseAsync(HttpClient client)
     {

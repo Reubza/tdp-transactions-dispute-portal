@@ -20,6 +20,7 @@ const transaction: Transaction = {
   description: null,
   postedAt: '2026-10-28T10:00:00Z',
   canDispute: true,
+  disputeIsAppeal: false,
   notDisputableReason: null,
   latestDisputeId: null,
   latestDisputeStatus: null,
@@ -107,5 +108,34 @@ describe('DisputeDialogComponent', () => {
     expect(
       (fixture.nativeElement as HTMLElement).querySelector('[role=alert]')?.textContent,
     ).toContain('already has an open dispute');
+  });
+
+  it('is worded as a dispute when it is not an appeal', () => {
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+
+    expect(text).toContain('Dispute transaction');
+    expect(text).toContain('Submit dispute');
+    expect(text).not.toContain('once');
+  });
+});
+
+describe('DisputeDialogComponent for an appeal', () => {
+  it('explains the one-time appeal and labels the action as an appeal', async () => {
+    await TestBed.configureTestingModule({
+      imports: [DisputeDialogComponent],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: MAT_DIALOG_DATA, useValue: { ...transaction, disputeIsAppeal: true } },
+        { provide: MatDialogRef, useValue: { close: vi.fn(), disableClose: false } },
+      ],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(DisputeDialogComponent);
+    await fixture.whenStable();
+
+    const text = (fixture.nativeElement as HTMLElement).textContent ?? '';
+    expect(text).toContain('Appeal declined dispute');
+    expect(text).toContain('once');
+    expect(text).toContain('Submit appeal');
   });
 });

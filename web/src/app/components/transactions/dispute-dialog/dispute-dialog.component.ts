@@ -33,8 +33,17 @@ export const DESCRIPTION_MAX = 2000;
     @if (submitting()) {
       <mat-progress-bar mode="indeterminate" />
     }
-    <h2 mat-dialog-title>Dispute transaction</h2>
+    <h2 mat-dialog-title>
+      {{ tx.disputeIsAppeal ? 'Appeal declined dispute' : 'Dispute transaction' }}
+    </h2>
     <mat-dialog-content>
+      @if (tx.disputeIsAppeal) {
+        <p class="appeal-note">
+          We declined your earlier dispute of this transaction. You can appeal the decision
+          <strong>once</strong>. Tell us anything new that we should consider, such as proof of
+          delivery, a refund promise from the merchant, or a police case number.
+        </p>
+      }
       <dl class="summary">
         <dt>Merchant</dt>
         <dd>{{ tx.merchant }}</dd>
@@ -87,7 +96,7 @@ export const DESCRIPTION_MAX = 2000;
     <mat-dialog-actions align="end">
       <button mat-button type="button" mat-dialog-close [disabled]="submitting()">Cancel</button>
       <button mat-flat-button type="submit" form="dispute-form" [disabled]="submitting()">
-        Submit dispute
+        {{ tx.disputeIsAppeal ? 'Submit appeal' : 'Submit dispute' }}
       </button>
     </mat-dialog-actions>
   `,
@@ -117,6 +126,13 @@ export const DESCRIPTION_MAX = 2000;
     }
     .error {
       color: var(--mat-sys-error);
+    }
+    .appeal-note {
+      margin: 0 0 16px;
+      padding: 12px 16px;
+      border-radius: 12px;
+      background: var(--mat-sys-secondary-container);
+      color: var(--mat-sys-on-secondary-container);
     }
   `,
 })

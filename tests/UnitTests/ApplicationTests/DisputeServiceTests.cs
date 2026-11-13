@@ -212,6 +212,68 @@ public sealed class DisputeServiceTests : IDisposable
         Assert.Equal(old.Id, Assert.Single(search.Items).Id);
     }
 
+    [Fact]
+    public async Task Create_refuses_a_second_dispute_after_one_was_upheld()
+    {
+        await SeedAsync();
+        var (first, _) = await _ctx.Disputes().CreateAsync(Request(), null, default);
+        await ResolveAsync(first.Summary.Id, upheld: true);
+
+        var ex = await Assert.ThrowsAsync<DomainException>(() => _ctx.Disputes().CreateAsync(Request(), null, default));
+
+        Assert.Equal(DisputeErrorCodes.AlreadyResolved, ex.Code);
+        var tx = await _ctx.Transactions().GetAsync(_transaction.Id, default);
+        Assert.False(tx.CanDispute);
+        Assert.Contains("already refunded", tx.NotDisputableReason, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Rejected_dispute_can_be_appealed_once_then_is_final()
+    {
+        await SeedAsync();
+        var (original, _) = await _ctx.Disputes().CreateAsync(Request(), null, default);
+        await ResolveAsync(original.Summary.Id, upheld: false);
+
+        var beforeAppeal = await _ctx.Transactions().GetAsync(_transaction.Id, default);
+        Assert.True(beforeAppeal.CanDispute);
+        Assert.True(beforeAppeal.DisputeIsAppeal);
+
+        var (appeal, created) = await _ctx.Disputes().CreateAsync(Request(), null, default);
+        Assert.True(created);
+        Assert.Equal(original.Summary.Id, appeal.Summary.AppealOfDisputeId);
+
+        await ResolveAsync(appeal.Summary.Id, upheld: false);
+
+        var ex = await Assert.ThrowsAsync<DomainException>(() => _ctx.Disputes().CreateAsync(Request(), null, default));
+        Assert.Equal(DisputeErrorCodes.AppealExhausted, ex.Code);
+        Assert.False((await _ctx.Transactions().GetAsync(_transaction.Id, default)).CanDispute);
+    }
+
+    [Fact]
+    public async Task Appeal_must_be_raised_within_the_appeal_window()
+    {
+        await SeedAsync();
+        var (original, _) = await _ctx.Disputes().CreateAsync(Request(), null, default);
+        await ResolveAsync(original.Summary.Id, upheld: false);
+
+        _ctx.Clock.Advance(TestData.AppealWindow + TimeSpan.FromDays(1));
+
+        var ex = await Assert.ThrowsAsync<DomainException>(() => _ctx.Disputes().CreateAsync(Request(), null, default));
+        Assert.Equal(DisputeErrorCodes.AppealWindowExpired, ex.Code);
+    }
+
+    private async Task ResolveAsync(Guid disputeId, bool upheld)
+    {
+        _ctx.CurrentUser.SignInAs(_agent);
+        await _ctx.AgentDisputes().UpdateStatusAsync(
+            disputeId, new UpdateDisputeStatusRequest(AgentDisputeAction.StartReview, null), default);
+        await _ctx.AgentDisputes().UpdateStatusAsync(
+            disputeId,
+            new UpdateDisputeStatusRequest(upheld ? AgentDisputeAction.Uphold : AgentDisputeAction.Reject, "Decision"),
+            default);
+        _ctx.CurrentUser.SignInAs(_customer);
+    }
+
     private CreateDisputeRequest Request(Guid? transactionId = null) =>
         new(transactionId ?? _transaction.Id, DisputeReason.Unauthorised, "I did not make this purchase.");
 

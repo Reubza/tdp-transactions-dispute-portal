@@ -1,4 +1,5 @@
 using Domain.Accounts;
+using Domain.Disputes;
 using Domain.Transactions;
 using Domain.Users;
 
@@ -8,6 +9,8 @@ internal static class TestData
 {
     public static readonly DateTimeOffset Now = new(2026, 11, 2, 10, 0, 0, TimeSpan.Zero);
     public static readonly TimeSpan Window = TimeSpan.FromDays(120);
+    public static readonly TimeSpan AppealWindow = TimeSpan.FromDays(30);
+    public static readonly DisputeRules Rules = new(Window, AppealWindow);
 
     public static User Customer(string name = "Test Customer") =>
         new(Guid.NewGuid(), name, $"{Guid.NewGuid():N}@example.com", UserRole.Customer);

@@ -57,24 +57,30 @@ public sealed class DisputeService(
             .SingleOrDefaultAsync(cancellationToken)
             ?? throw new NotFoundException("Transaction", request.TransactionId);
 
-        var hasOpenDispute = await db.Disputes.AnyAsync(
-            d => d.TransactionId == transaction.Id &&
-                 (d.Status == DisputeStatus.Submitted || d.Status == DisputeStatus.UnderReview),
-            cancellationToken);
-        if (hasOpenDispute)
+        var priorDisputes = await db.Disputes
+            .Where(d => d.TransactionId == transaction.Id)
+            .Select(d => new PriorDispute(d.Id, d.Status, d.ResolvedAt, d.AppealOfDisputeId))
+            .ToListAsync(cancellationToken);
+
+        var now = clock.GetUtcNow();
+        var rules = options.Value.Rules;
+
+        // An open dispute is a conflict with existing state (409); every other refusal is a business rule (422).
+        if (DisputeEligibility.Check(transaction, priorDisputes, now, rules).Error is
+            { Code: DisputeErrorCodes.AlreadyDisputed } openDispute)
         {
-            throw new ConflictException(
-                DisputeErrorCodes.AlreadyDisputed, "This transaction already has an open dispute.");
+            throw new ConflictException(openDispute.Code, openDispute.Message);
         }
 
         var dispute = Dispute.Raise(
             transaction,
+            priorDisputes,
             currentUser.UserId,
             request.Reason,
             request.Description,
             key,
-            clock.GetUtcNow(),
-            options.Value.DisputeWindow);
+            now,
+            rules);
 
         db.Disputes.Add(dispute);
         await db.SaveChangesAsync(cancellationToken);

@@ -37,6 +37,11 @@ public sealed class Dispute
 
     public Transaction Transaction { get; private set; } = null!;
 
+    /// <summary>The rejected dispute this one appeals, or <c>null</c> for a first dispute.</summary>
+    public Guid? AppealOfDisputeId { get; private set; }
+
+    public bool IsAppeal => AppealOfDisputeId is not null;
+
     public Guid CustomerId { get; private set; }
 
     public DisputeReason Reason { get; private set; }
@@ -66,14 +71,19 @@ public sealed class Dispute
     public static bool IsOpenStatus(DisputeStatus status) =>
         status is DisputeStatus.Submitted or DisputeStatus.UnderReview;
 
+    /// <summary>
+    /// Raises a dispute, or an appeal of a rejected one, if <see cref="DisputeEligibility"/> allows it given
+    /// <paramref name="priorDisputes"/> (every earlier dispute of the same transaction).
+    /// </summary>
     public static Dispute Raise(
         Transaction transaction,
+        IEnumerable<PriorDispute> priorDisputes,
         Guid customerId,
         DisputeReason reason,
         string description,
         string? idempotencyKey,
         DateTimeOffset now,
-        TimeSpan disputeWindow)
+        DisputeRules rules)
     {
         ArgumentNullException.ThrowIfNull(transaction);
 
@@ -82,16 +92,17 @@ public sealed class Dispute
             throw new ArgumentOutOfRangeException(nameof(reason));
         }
 
-        var notDisputable = transaction.CheckDisputable(now, disputeWindow);
-        if (notDisputable is not null)
+        var eligibility = DisputeEligibility.Check(transaction, priorDisputes, now, rules);
+        if (eligibility.Error is { } error)
         {
-            throw notDisputable;
+            throw error;
         }
 
         var dispute = new Dispute
         {
             Id = Guid.CreateVersion7(now),
             TransactionId = transaction.Id,
+            AppealOfDisputeId = eligibility.AppealOfDisputeId,
             CustomerId = customerId,
             Reason = reason,
             Description = Guard.NotBlank(description, nameof(description), DescriptionMaxLength),

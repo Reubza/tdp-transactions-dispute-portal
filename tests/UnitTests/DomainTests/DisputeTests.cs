@@ -15,7 +15,7 @@ public class DisputeTests
     {
         var tx = TestData.Transaction(Guid.NewGuid());
 
-        var dispute = Dispute.Raise(tx, CustomerId, DisputeReason.Duplicate, "  Charged twice  ", "key-1", TestData.Now, TestData.Window);
+        var dispute = Dispute.Raise(tx, [], CustomerId, DisputeReason.Duplicate, "  Charged twice  ", "key-1", TestData.Now, TestData.Rules);
 
         Assert.Equal(DisputeStatus.Submitted, dispute.Status);
         Assert.Equal(tx.Id, dispute.TransactionId);
@@ -40,7 +40,7 @@ public class DisputeTests
         var tx = TestData.Transaction(Guid.NewGuid(), direction, status, TimeSpan.FromDays(ageDays));
 
         var ex = Assert.Throws<DomainException>(() =>
-            Dispute.Raise(tx, CustomerId, DisputeReason.Other, "Something went wrong", null, TestData.Now, TestData.Window));
+            Dispute.Raise(tx, [], CustomerId, DisputeReason.Other, "Something went wrong", null, TestData.Now, TestData.Rules));
 
         Assert.Equal(expectedCode, ex.Code);
     }
@@ -131,10 +131,11 @@ public class DisputeTests
     private static Dispute NewDispute() =>
         Dispute.Raise(
             TestData.Transaction(Guid.NewGuid()),
+            [],
             CustomerId,
             DisputeReason.Unauthorised,
             "I did not make this purchase",
             null,
             TestData.Now,
-            TestData.Window);
+            TestData.Rules);
 }

@@ -76,6 +76,10 @@ namespace Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<Guid?>("AppealOfDisputeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("appeal_of_dispute_id");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
@@ -132,6 +136,11 @@ namespace Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_disputes");
+
+                    b.HasIndex("AppealOfDisputeId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_disputes_one_appeal_per_dispute")
+                        .HasFilter("appeal_of_dispute_id IS NOT NULL AND status <> 'Withdrawn'");
 
                     b.HasIndex("TransactionId")
                         .IsUnique()
@@ -318,6 +327,12 @@ namespace Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Domain.Disputes.Dispute", b =>
                 {
+                    b.HasOne("Domain.Disputes.Dispute", null)
+                        .WithMany()
+                        .HasForeignKey("AppealOfDisputeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_disputes_disputes_appeal_of_dispute_id");
+
                     b.HasOne("Domain.Users.User", null)
                         .WithMany()
                         .HasForeignKey("CustomerId")

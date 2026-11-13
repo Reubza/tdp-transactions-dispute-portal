@@ -154,9 +154,13 @@
                   type="button"
                   [disabled]="!tx.canDispute"
                   (click)="openDispute(tx)"
-                  [attr.aria-label]="'Dispute ' + tx.merchant + ' transaction'"
+                  [attr.aria-label]="
+                    (tx.disputeIsAppeal ? 'Appeal the declined dispute of ' : 'Dispute ') +
+                    tx.merchant +
+                    ' transaction'
+                  "
                 >
-                  Dispute
+                  {{ tx.disputeIsAppeal ? 'Appeal' : 'Dispute' }}
                 </button>
               </span>
             </td>

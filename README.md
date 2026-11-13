@@ -74,8 +74,13 @@ apart, on Thandi's cheque account.
 6. **Resolve it.** Click *Uphold* with a resolution note. The dispute is now closed.
 7. **Back as Thandi**, open the dispute: the timeline shows each step, who made it and when.
 
-Also worth showing: transactions older than 120 days, pending ones and salary credits can't be disputed (hover the
-disabled button for the reason), and James can't see Thandi's disputes.
+Also worth showing:
+- **No second dispute after a refund.** A transaction whose dispute was upheld can't be disputed again. Hover the
+  disabled button for the reason.
+- **One appeal after a decline.** Thandi's recently declined dispute shows an *Appeal* button. She can appeal once,
+  within 30 days of the decision, and a declined appeal is final.
+- Transactions older than 120 days, pending ones and salary credits can't be disputed, and James can't see Thandi's
+  disputes.
 
 <table>
   <tr>

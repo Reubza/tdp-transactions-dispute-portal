@@ -50,7 +50,8 @@ public sealed record DisputeSummaryDto(
     DisputeStatus Status,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
-    DateTimeOffset? ResolvedAt);
+    DateTimeOffset? ResolvedAt,
+    Guid? AppealOfDisputeId);
 
 public sealed record DisputeHistoryEntryDto(
     DisputeStatus? FromStatus,

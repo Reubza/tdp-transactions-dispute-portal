@@ -90,15 +90,16 @@ public sealed class TransactionService(
                 .Where(d => d.TransactionId == t.Id)
                 .OrderByDescending(d => d.CreatedAt)
                 .Select(d => new LatestDispute(d.Id, d.Status))
-                .FirstOrDefault()));
+                .FirstOrDefault(),
+            db.Disputes
+                .Where(d => d.TransactionId == t.Id)
+                .Select(d => new PriorDispute(d.Id, d.Status, d.ResolvedAt, d.AppealOfDisputeId))
+                .ToList()));
 
     private TransactionDto ToDto(TransactionRow row)
     {
         var t = row.Transaction;
-        var openDispute = row.LatestDispute is { } latest && Dispute.IsOpenStatus(latest.Status);
-        var reason = openDispute
-            ? "This transaction already has an open dispute."
-            : t.CheckDisputable(clock.GetUtcNow(), options.Value.DisputeWindow)?.Message;
+        var eligibility = DisputeEligibility.Check(t, row.PriorDisputes, clock.GetUtcNow(), options.Value.Rules);
 
         return new TransactionDto(
             t.Id,
@@ -113,8 +114,9 @@ public sealed class TransactionService(
             t.Reference,
             t.Description,
             t.PostedAt,
-            reason is null,
-            reason,
+            eligibility.IsEligible,
+            eligibility.Error?.Message,
+            eligibility.IsAppeal,
             row.LatestDispute?.Id,
             row.LatestDispute?.Status);
     }
@@ -122,5 +124,9 @@ public sealed class TransactionService(
     private sealed record LatestDispute(Guid Id, DisputeStatus Status);
 
     private sealed record TransactionRow(
-        Transaction Transaction, string AccountName, string AccountNumber, LatestDispute? LatestDispute);
+        Transaction Transaction,
+        string AccountName,
+        string AccountNumber,
+        LatestDispute? LatestDispute,
+        List<PriorDispute> PriorDisputes);
 }

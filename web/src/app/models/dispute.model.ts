@@ -25,6 +25,8 @@ export interface DisputeSummary {
   createdAt: string;
   updatedAt: string;
   resolvedAt: string | null;
+  /** Set when this dispute is an appeal of an earlier, declined dispute. */
+  appealOfDisputeId: string | null;
 }
 
 export interface DisputeHistoryEntry {

@@ -42,6 +42,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             {
                 DisputeConfiguration.OpenDisputePerTransactionIndex => new ConflictException(
                     DisputeErrorCodes.AlreadyDisputed, "This transaction already has an open dispute.", ex),
+                DisputeConfiguration.OneAppealPerDisputeIndex => new ConflictException(
+                    DisputeErrorCodes.AppealExhausted, "This dispute has already been appealed.", ex),
                 DisputeConfiguration.IdempotencyKeyIndex => new ConflictException(
                     "dispute.idempotency_key_reused", "This Idempotency-Key has already been used.", ex),
                 _ => new ConflictException("unique_violation", "The resource already exists.", ex),

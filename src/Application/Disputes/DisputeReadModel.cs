@@ -54,7 +54,8 @@ internal static class DisputeReadModel
                 r.Dispute.Status,
                 r.Dispute.CreatedAt,
                 r.Dispute.UpdatedAt,
-                r.Dispute.ResolvedAt))
+                r.Dispute.ResolvedAt,
+                r.Dispute.AppealOfDisputeId))
             .ToPageAsync(query, cancellationToken);
 
         return new PagedResult<DisputeSummaryDto>(items, query.Page, query.PageSize, total);
@@ -90,7 +91,8 @@ internal static class DisputeReadModel
             dispute.Status,
             dispute.CreatedAt,
             dispute.UpdatedAt,
-            dispute.ResolvedAt);
+            dispute.ResolvedAt,
+            dispute.AppealOfDisputeId);
 
         var history = dispute.History
             .OrderBy(h => h.ChangedAt)

@@ -41,6 +41,12 @@
             <dt>Customer</dt>
             <dd>{{ d.summary.customerName }}</dd>
           }
+          @if (d.summary.appealOfDisputeId; as originalId) {
+            <dt>Appeal of</dt>
+            <dd>
+              <a [routerLink]="[backLink(), originalId]">the declined dispute</a>
+            </dd>
+          }
           <dt>Reason</dt>
           <dd>{{ reasonLabel(d.summary.reason) }}</dd>
           <dt>Raised</dt>

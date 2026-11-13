@@ -34,6 +34,7 @@ public sealed record TransactionDto(
     DateTimeOffset PostedAt,
     bool CanDispute,
     string? NotDisputableReason,
+    bool DisputeIsAppeal,
     Guid? LatestDisputeId,
     DisputeStatus? LatestDisputeStatus);
 

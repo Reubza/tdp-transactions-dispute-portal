@@ -26,6 +26,8 @@ export interface Transaction {
   postedAt: string;
   canDispute: boolean;
   notDisputableReason: string | null;
+  /** True when a new dispute would be the one allowed appeal of a declined dispute. */
+  disputeIsAppeal: boolean;
   latestDisputeId: string | null;
   latestDisputeStatus: DisputeStatus | null;
 }
